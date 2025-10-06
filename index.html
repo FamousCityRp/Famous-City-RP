@@ -121,10 +121,10 @@
       <button onclick="changeSiteTitleColorAdmin()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Alterar Cor do Nome</button>
 
       <h4 class="font-semibold mb-2 mt-6">Cor do Tema Global</h4>
-      <input type="color" id="adminThemeColorInput" onchange="changeThemeColor(this.value)" />
+      <input type="color" onchange="changeThemeColor(this.value)" />
 
       <h4 class="font-semibold mb-2 mt-6">Cor da Barra Global</h4>
-      <input type="color" id="adminBarColorInput" onchange="changeBarColor(this.value)" />
+      <input type="color" onchange="changeBarColor(this.value)" />
 
       <h4 class="font-semibold mb-2 mt-6">Imagem do Plano de Fundo Global</h4>
       <input type="file" id="adminBackgroundInput" accept="image/*" />
@@ -166,9 +166,9 @@
 </div>
 
 <script type="module">
-
+// Firebase and app initialization:
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, get, remove, child } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, get, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDun-EEYvE7pUYtJCS7APB6J4xSD-gN0oE",
@@ -184,25 +184,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// Variables:
 let bars = [];
 let barColor = '#3B82F6';
 let isAdmin = false;
 let currentUser = null;
 
-function showNotification(msg){
+// Notification helper
+function showNotification(msg) {
   const el = document.getElementById('notification');
   document.getElementById('notification-message').textContent = msg;
   el.classList.remove('hidden');
   setTimeout(() => el.classList.add('hidden'), 2500);
 }
 
+// Settings modal functions
 function openSettingsModal() {
   const modal = document.getElementById('settingsModal');
   const content = document.getElementById('settingsContent');
   modal.classList.remove('hidden');
   content.classList.remove('fade-leave-active');
   content.classList.add('fade-enter-active');
+
+  // Open members tab by default
+  document.getElementById('memberSettings').classList.remove('hidden');
+  document.getElementById('memberSettings').style.display = 'block';
+  document.getElementById('adminSettings').classList.add('hidden');
+  document.getElementById('adminSettings').style.display = 'none';
 }
+
 function closeSettingsModal() {
   const modal = document.getElementById('settingsModal');
   const content = document.getElementById('settingsContent');
@@ -211,45 +221,49 @@ function closeSettingsModal() {
   setTimeout(() => modal.classList.add('hidden'), 200);
 }
 
-function openAdminPanel(){
+// Open admin panel from shield icon
+function openAdminPanel() {
   openSettingsModal();
+
   document.getElementById('memberSettings').classList.add('hidden');
   document.getElementById('memberSettings').style.display = 'none';
   document.getElementById('adminSettings').classList.remove('hidden');
   document.getElementById('adminSettings').style.display = 'block';
 }
 
-function showAdminShieldIcon(){
+// Show admin shield icon
+function showAdminShieldIcon() {
   const shield = document.getElementById('adminShieldBtn');
   shield.classList.remove('hidden');
   feather.replace();
 }
 
-function loadLocalThemeColors(){
+// Load local storage settings for members
+function loadLocalThemeColors() {
   const theme = localStorage.getItem('themeColor');
   const bar = localStorage.getItem('barColor');
   const siteTitleColor = localStorage.getItem('siteTitleColor');
-  if(theme){
+  if (theme) {
     document.documentElement.style.setProperty('--primary-color', theme);
   }
-  if(bar){
+  if (bar) {
     barColor = bar;
   }
-  if(siteTitleColor){
+  if (siteTitleColor) {
     document.documentElement.style.setProperty('--site-title-color', siteTitleColor);
     document.getElementById('siteTitle').style.color = siteTitleColor;
   }
 }
-function loadLocalBackgroundImage(){
+function loadLocalBackgroundImage() {
   const localBg = localStorage.getItem('memberBackgroundImage');
-  if(localBg){
+  if (localBg) {
     document.body.style.backgroundImage = `url(${localBg})`;
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   const adminLogged = sessionStorage.getItem('adminLogged');
-  if(adminLogged === 'true'){
+  if (adminLogged === 'true') {
     isAdmin = true;
     showAdminShieldIcon();
     loadCredentials();
@@ -261,14 +275,18 @@ document.addEventListener('DOMContentLoaded', () => {
   feather.replace();
 });
 
-async function loginAdmin(){
+// Login admin function
+async function loginAdmin() {
   const user = document.getElementById('adminUsername').value.trim();
   const pass = document.getElementById('adminPassword').value.trim();
-  if(!user || !pass){ alert('Preencha usuário e senha'); return; }
+  if (!user || !pass) {
+    alert('Preencha usuário e senha');
+    return;
+  }
 
   const [adminsSnap, credsSnap] = await Promise.all([
-    get(ref(db,'admins')),
-    get(ref(db,'credentials'))
+    get(ref(db, 'admins')),
+    get(ref(db, 'credentials'))
   ]);
   const admins = adminsSnap.val() || {};
   const creds = credsSnap.val() || {};
@@ -276,7 +294,7 @@ async function loginAdmin(){
   const validAdmin = Object.values(admins).some(a => a.username === user && a.password === pass);
   const validCred = Object.values(creds).some(c => c.username === user && c.password === pass);
 
-  if(validAdmin || validCred){
+  if (validAdmin || validCred) {
     isAdmin = true;
     currentUser = user;
     sessionStorage.setItem('adminLogged', 'true');
@@ -284,31 +302,33 @@ async function loginAdmin(){
     showAdminShieldIcon();
     loadCredentials();
     renderProofsPanel();
-  } else alert('Usuário ou senha incorretos.');
+  } else {
+    alert('Usuário ou senha incorretos.');
+  }
 }
 
-function changeThemeColorMember(hex){
+// Member customization functions
+function changeThemeColorMember(hex) {
   document.documentElement.style.setProperty('--primary-color', hex);
   localStorage.setItem('themeColor', hex);
   showNotification('Tema alterado para você');
 }
-function changeBarColorMember(hex){
+function changeBarColorMember(hex) {
   barColor = hex;
   renderBars();
   localStorage.setItem('barColor', hex);
   showNotification('Cor da barra alterada para você');
 }
-function changeSiteTitleColorMember(hex){
+function changeSiteTitleColorMember(hex) {
   document.documentElement.style.setProperty('--site-title-color', hex);
   document.getElementById('memberSiteTitleColor').value = hex;
   document.getElementById('siteTitle').style.color = hex;
   localStorage.setItem('siteTitleColor', hex);
   showNotification('Cor do nome do site alterada para você');
 }
-
 document.getElementById('memberBackgroundInput').addEventListener('change', e => {
   const file = e.target.files[0];
-  if(!file) return;
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
     const dataUrl = reader.result;
@@ -319,16 +339,17 @@ document.getElementById('memberBackgroundInput').addEventListener('change', e =>
   reader.readAsDataURL(file);
 });
 
-function changeThemeColor(hex){
-  if(isAdmin){
+// Admin global customization functions
+function changeThemeColor(hex) {
+  if (isAdmin) {
     set(ref(db, 'globalColors/themeColor'), hex);
     showNotification('Tema global alterado!');
   } else {
     alert('Somente admin pode mudar o tema global.');
   }
 }
-function changeBarColor(hex){
-  if(isAdmin){
+function changeBarColor(hex) {
+  if (isAdmin) {
     barColor = hex;
     renderBars();
     set(ref(db, 'globalColors/barColor'), hex);
@@ -337,51 +358,49 @@ function changeBarColor(hex){
     alert('Somente admin pode mudar a cor da barra global.');
   }
 }
-function changeBackgroundColor(hex){
-  if(isAdmin){
+function changeBackgroundColor(hex) {
+  if (isAdmin) {
     set(ref(db, 'globalColors/backgroundColor'), hex);
     showNotification('Fundo global alterado!');
   } else {
     alert('Somente admin pode mudar o fundo global.');
   }
 }
-
-function changeSiteTitleAdmin(){
-  if(isAdmin){
+function changeSiteTitleAdmin() {
+  if (isAdmin) {
     const name = document.getElementById('adminSiteTitle').value.trim() || "Progresso em Foco";
-    set(ref(db,'siteTitle'), name).then(()=> showNotification('Nome do site alterado!'));
+    set(ref(db, 'siteTitle'), name).then(() => showNotification('Nome do site alterado!'));
   } else alert('Somente admin pode alterar o nome do site.');
 }
-
-function changeSiteTitleColorAdmin(){
-  if(isAdmin){
+function changeSiteTitleColorAdmin() {
+  if (isAdmin) {
     const color = document.getElementById('adminSiteTitleColor').value;
-    set(ref(db, 'siteTitleColor'), color).then(()=> showNotification('Cor do nome do site alterada!'));
+    set(ref(db, 'siteTitleColor'), color).then(() => showNotification('Cor do nome do site alterada!'));
   } else alert('Somente admin pode alterar a cor do nome do site.');
 }
-
 document.getElementById('adminBackgroundInput').addEventListener('change', e => {
-  if(!isAdmin) return alert('Somente admins podem alterar fundo global!');
+  if (!isAdmin) return alert('Somente admins podem alterar fundo global!');
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
     const dataUrl = reader.result;
-    set(ref(db, 'globalBackgroundImage'), dataUrl).then(()=> showNotification('Plano de fundo global alterado!'));
+    set(ref(db, 'globalBackgroundImage'), dataUrl).then(() => showNotification('Plano de fundo global alterado!'));
   };
   reader.readAsDataURL(file);
 });
 
+// Firebase listeners to keep UI updated
 onValue(ref(db, 'globalColors'), snap => {
   const colors = snap.val() || {};
-  if(colors.themeColor){
+  if (colors.themeColor) {
     document.documentElement.style.setProperty('--primary-color', colors.themeColor);
   }
-  if(colors.barColor){
+  if (colors.barColor) {
     barColor = colors.barColor;
     renderBars();
   }
-  if(colors.backgroundColor){
+  if (colors.backgroundColor) {
     document.body.style.backgroundColor = colors.backgroundColor;
   }
 });
@@ -390,16 +409,14 @@ onValue(ref(db, 'siteTitle'), snap => {
   const name = snap.val() || 'Progresso em Foco';
   document.getElementById('siteTitle').textContent = name;
 });
-
 onValue(ref(db, 'siteTitleColor'), snap => {
   const color = snap.val() || '#3B82F6';
   document.documentElement.style.setProperty('--site-title-color', color);
   document.getElementById('siteTitle').style.color = color;
 });
-
 onValue(ref(db, 'globalBackgroundImage'), snap => {
   const url = snap.val();
-  if(url) {
+  if (url) {
     document.body.style.backgroundImage = `url(${url})`;
   } else {
     document.body.style.backgroundImage = '';
@@ -409,28 +426,31 @@ onValue(ref(db, 'globalBackgroundImage'), snap => {
 document.getElementById('addBarBtn').addEventListener('click', () => {
   const name = document.getElementById('newBarName').value.trim();
   const goalStr = document.getElementById('newBarGoal').value.trim();
-  if(!name){ alert('Digite o nome da meta'); return; }
-  if(!goalStr || isNaN(goalStr)) {
+  if (!name) {
+    alert('Digite o nome da meta');
+    return;
+  }
+  if (!goalStr || isNaN(goalStr)) {
     alert('Digite um valor válido para a meta (%)');
     return;
   }
   const goal = parseFloat(goalStr);
-  // use a simple prompt for member name (keeps previous behavior)
   currentUser = prompt('Digite seu nome', currentUser || 'Membro') || (currentUser || 'Membro');
-  push(ref(db,'bars'), {
+  push(ref(db, 'bars'), {
     name,
     member: currentUser,
     progress: 0,
     goal,
     proofs: {}
-  }).then(()=> {
+  }).then(() => {
     document.getElementById('newBarName').value = '';
     document.getElementById('newBarGoal').value = '';
     showNotification('Meta adicionada!');
   });
 });
 
-function renderBars(){
+// Rendering bars and leaderboard
+function renderBars() {
   const container = document.getElementById('barsContainer');
   container.innerHTML = '';
   const leaderboard = document.getElementById('leaderboard');
@@ -438,19 +458,19 @@ function renderBars(){
 
   bars.forEach(b => {
     const canEdit = isAdmin || b.member === currentUser;
-    const relativeProgress = ( (b.progress || 0) / (b.goal || 100) ) * 100;
+    const relativeProgress = ((b.progress || 0) / (b.goal || 100)) * 100;
 
-    // leaderboard entry
+    // Leaderboard entry
     const lbItem = document.createElement('div');
     lbItem.textContent = `${b.member}: ${b.progress || 0}%`;
     lbItem.className = 'bg-gray-100 p-2 rounded';
     leaderboard.appendChild(lbItem);
 
-    // bar card
+    // Bar card
     const barEl = document.createElement('div');
     barEl.className = 'bg-white rounded-lg shadow p-6 mb-4';
 
-    // header
+    // Header
     const header = document.createElement('div');
     header.className = 'flex justify-between items-center mb-4';
 
@@ -460,7 +480,7 @@ function renderBars(){
 
     header.appendChild(title);
 
-    if(canEdit){
+    if (canEdit) {
       const delBtn = document.createElement('button');
       delBtn.className = 'bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600';
       delBtn.textContent = 'Excluir';
@@ -470,7 +490,7 @@ function renderBars(){
 
     barEl.appendChild(header);
 
-    // progress row
+    // Progress row
     const progressRow = document.createElement('div');
     progressRow.className = 'flex items-center space-x-4 mb-2';
 
@@ -491,7 +511,7 @@ function renderBars(){
 
     barEl.appendChild(progressRow);
 
-    // upload row
+    // Upload row
     const uploadRow = document.createElement('div');
     uploadRow.className = 'flex items-center gap-2';
 
@@ -503,7 +523,6 @@ function renderBars(){
 
     fileInput.addEventListener('change', e => {
       handleFileUpload(b.key, e.target.files[0]);
-      // clear input so same file can be re-uploaded if needed
       e.target.value = '';
     });
 
@@ -523,24 +542,22 @@ function renderBars(){
   feather.replace();
 }
 
-function deleteBar(key){
-  if(!key) return;
-  if(confirm('Deseja realmente excluir esta barra?')){
-    remove(ref(db,'bars/'+key)).then(()=> showNotification('Barra excluída!'));
+function deleteBar(key) {
+  if (!key) return;
+  if (confirm('Deseja realmente excluir esta barra?')) {
+    remove(ref(db, 'bars/' + key)).then(() => showNotification('Barra excluída!'));
   }
 }
 
-function handleFileUpload(barKey, file){
-  if(!file) return;
+function handleFileUpload(barKey, file) {
+  if (!file) return;
   const reader = new FileReader();
-  reader.onload = e =>{
-    // push proof as an object entry (not array)
-    push(ref(db,`bars/${barKey}/proofs`), {date:new Date().toISOString(), image:e.target.result}).then((res) => {
-      // update progress (read current progress then add)
-      get(ref(db,`bars/${barKey}/progress`)).then(snap => {
+  reader.onload = e => {
+    push(ref(db, `bars/${barKey}/proofs`), { date: new Date().toISOString(), image: e.target.result }).then(() => {
+      get(ref(db, `bars/${barKey}/progress`)).then(snap => {
         let currentProgress = snap.val() || 0;
         const newProgress = Math.min(currentProgress + 10, 100);
-        set(ref(db,`bars/${barKey}/progress`), newProgress).then(()=> {
+        set(ref(db, `bars/${barKey}/progress`), newProgress).then(() => {
           showNotification('Prova enviada e progresso atualizado');
         });
       });
@@ -549,30 +566,25 @@ function handleFileUpload(barKey, file){
   reader.readAsDataURL(file);
 }
 
-function sendGlobalMessage(){
+function sendGlobalMessage() {
   const msg = document.getElementById('globalMessageInput').value.trim();
-  if(!msg){ alert('Digite uma mensagem'); return; }
-  set(ref(db,'globalMessage'), msg).then(()=> {
+  if (!msg) { alert('Digite uma mensagem'); return; }
+  set(ref(db, 'globalMessage'), msg).then(() => {
     showNotification('Mensagem global enviada!');
-    document.getElementById('globalMessageInput').value='';
+    document.getElementById('globalMessageInput').value = '';
     sessionStorage.removeItem('globalMessageClosed');
   });
 }
 
-/**
- * Normalize bar.proofs into array of {proofKey, proof}
- * bars entries come from RTDB where proofs are usually an object of push-keys
- */
-function proofsToArray(proofsObj){
-  if(!proofsObj) return [];
-  if(Array.isArray(proofsObj)) return proofsObj.map((p, idx) => ({proofKey: idx, proof: p}));
-  return Object.entries(proofsObj).map(([k,v]) => ({proofKey: k, proof: v}));
+function proofsToArray(proofsObj) {
+  if (!proofsObj) return [];
+  if (Array.isArray(proofsObj)) return proofsObj.map((p, idx) => ({ proofKey: idx, proof: p }));
+  return Object.entries(proofsObj).map(([k, v]) => ({ proofKey: k, proof: v }));
 }
 
-onValue(ref(db,'bars'), snap => {
+onValue(ref(db, 'bars'), snap => {
   const raw = snap.val() || {};
-  bars = Object.entries(raw).map(([key,val]) => {
-    // ensure progress and proofs are present
+  bars = Object.entries(raw).map(([key, val]) => {
     return {
       key,
       name: val.name,
@@ -583,14 +595,14 @@ onValue(ref(db,'bars'), snap => {
     };
   });
   renderBars();
-  if(isAdmin) renderProofsPanel();
+  if (isAdmin) renderProofsPanel();
 });
 
-onValue(ref(db,'globalMessage'), snap => {
+onValue(ref(db, 'globalMessage'), snap => {
   const msg = snap.val();
   if (msg) {
     const closedMsg = sessionStorage.getItem('globalMessageClosed');
-    if(closedMsg !== msg){
+    if (closedMsg !== msg) {
       const modal = document.getElementById('globalMessageModal');
       document.getElementById('globalMessageText').textContent = msg;
       modal.classList.remove('hidden');
@@ -607,12 +619,12 @@ onValue(ref(db,'globalMessage'), snap => {
 
 onValue(ref(db, 'credentials'), () => loadCredentials());
 
-function loadCredentials(){
+function loadCredentials() {
   const adminList = document.getElementById('adminList');
   adminList.innerHTML = '';
-  get(ref(db,'credentials')).then(snap=>{
+  get(ref(db, 'credentials')).then(snap => {
     const creds = snap.val() || {};
-    Object.entries(creds).forEach(([key,val]) => {
+    Object.entries(creds).forEach(([key, val]) => {
       const div = document.createElement('div');
       div.className = 'flex justify-between items-center bg-gray-100 p-2 rounded';
 
@@ -630,32 +642,28 @@ function loadCredentials(){
     });
   });
 }
-function deleteCredential(key){
-  if(confirm('Deseja realmente excluir esta credencial?')) {
-    remove(ref(db,'credentials/' + key)).then(()=>{
+
+function deleteCredential(key) {
+  if (confirm('Deseja realmente excluir esta credencial?')) {
+    remove(ref(db, 'credentials/' + key)).then(() => {
       showNotification('Credencial excluída com sucesso!');
       loadCredentials();
     });
   }
 }
 
-/**
- * Build the admin proofs panel.
- * Handles proofs stored as objects (push keys) or arrays.
- */
-function renderProofsPanel(){
+function renderProofsPanel() {
   const proofsRoot = document.getElementById('proofsPanelRoot');
-  proofsRoot.innerHTML = ''; // clear
+  proofsRoot.innerHTML = '';
 
   const header = document.createElement('h4');
   header.className = 'font-semibold mb-2';
   header.textContent = 'Provas Enviadas (Admin)';
   proofsRoot.appendChild(header);
 
-  // iterate bars and their proofs
   bars.forEach(bar => {
     const proofsArr = proofsToArray(bar.proofs);
-    if(!proofsArr.length) return;
+    if (!proofsArr.length) return;
 
     const barDiv = document.createElement('div');
     barDiv.className = 'mb-4 border-b pb-2';
@@ -664,7 +672,7 @@ function renderProofsPanel(){
     title.innerHTML = `<strong>${bar.name} | ${bar.member}</strong>`;
     barDiv.appendChild(title);
 
-    proofsArr.forEach(({proofKey, proof}) => {
+    proofsArr.forEach(({ proofKey, proof }) => {
       const row = document.createElement('div');
       row.className = 'flex items-center gap-2 mb-2';
 
@@ -683,7 +691,6 @@ function renderProofsPanel(){
       const rejBtn = document.createElement('button');
       rejBtn.className = 'bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs mt-1';
       rejBtn.textContent = 'Rejeitar';
-      // pass bar key and proofKey to rejectProof
       rejBtn.addEventListener('click', () => rejectProof(bar.key, proofKey));
 
       info.appendChild(dateSpan);
@@ -699,35 +706,23 @@ function renderProofsPanel(){
   });
 }
 
-function rejectProof(barKey, proofKey){
-  if(!confirm('Deseja rejeitar esta prova? O membro terá que enviar outra prova válida.')) return;
+function rejectProof(barKey, proofKey) {
+  if (!confirm('Deseja rejeitar esta prova? O membro terá que enviar outra prova válida.')) return;
 
-  // remove the specific proof node (proofKey) under bars/{barKey}/proofs/{proofKey}
   remove(ref(db, `bars/${barKey}/proofs/${proofKey}`)).then(() => {
-    // Reset progress to 0
-    set(ref(db, `bars/${barKey}/progress`), 0).then(()=> {
+    set(ref(db, `bars/${barKey}/progress`), 0).then(() => {
       showNotification('Prova rejeitada. Progresso zerado para reenvio.');
-      // re-render proofs panel after DB update
       renderProofsPanel();
     });
   });
 }
 
-/* export functions for inline html onclicks and debugging */
+// Export functions globally for inline event handlers
 window.openSettingsModal = openSettingsModal;
 window.closeSettingsModal = closeSettingsModal;
 window.openAdminPanel = openAdminPanel;
 window.showAdminShieldIcon = showAdminShieldIcon;
 window.loginAdmin = loginAdmin;
-window.createCredential = createCredential;
-window.loadCredentials = loadCredentials;
-window.deleteCredential = deleteCredential;
-window.deleteBar = deleteBar;
-window.handleFileUpload = handleFileUpload;
-window.sendGlobalMessage = sendGlobalMessage;
-window.renderBars = renderBars;
-window.renderProofsPanel = renderProofsPanel;
-window.rejectProof = rejectProof;
 window.changeThemeColorMember = changeThemeColorMember;
 window.changeBarColorMember = changeBarColorMember;
 window.changeSiteTitleColorMember = changeSiteTitleColorMember;
@@ -736,6 +731,16 @@ window.changeBarColor = changeBarColor;
 window.changeBackgroundColor = changeBackgroundColor;
 window.changeSiteTitleAdmin = changeSiteTitleAdmin;
 window.changeSiteTitleColorAdmin = changeSiteTitleColorAdmin;
+window.addBar = () => document.getElementById('addBarBtn').click();
+window.renderBars = renderBars;
+window.deleteBar = deleteBar;
+window.handleFileUpload = handleFileUpload;
+window.sendGlobalMessage = sendGlobalMessage;
+window.createCredential = () => alert('Função Criar Credencial não implementada');  // Implement as needed
+window.loadCredentials = loadCredentials;
+window.deleteCredential = deleteCredential;
+window.renderProofsPanel = renderProofsPanel;
+window.rejectProof = rejectProof;
 
 </script>
 
