@@ -7,15 +7,39 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/feather-icons"></script>
 <style>
-:root { --primary-color: #3B82F6; }
-.progress-bar { transition: width 0.5s ease-in-out; }
-.notification { animation: slideIn 0.5s forwards, fadeOut 0.5s 2.5s forwards; }
-@keyframes slideIn { from { transform: translateY(-100px); opacity:0;} to { transform: translateY(0); opacity:1; } }
-@keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
-.fade-enter { opacity: 0; transform: scale(0.95); }
-.fade-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.3s ease, transform 0.3s ease; }
-.fade-leave { opacity: 1; transform: scale(1); }
-.fade-leave-active { opacity:0; transform: scale(0.95); transition: opacity 0.2s ease, transform 0.2s ease; }
+  :root {
+    --primary-color: #3B82F6;
+    --site-title-color: #3B82F6;
+  }
+  body {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .progress-bar {
+    transition: width 0.5s ease-in-out;
+  }
+  .notification {
+    animation: slideIn 0.5s forwards, fadeOut 0.5s 2.5s forwards;
+  }
+  @keyframes slideIn {
+    from {
+      transform: translateY(-100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  .fade-enter { opacity: 0; transform: scale(0.95); }
+  .fade-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.3s ease, transform 0.3s ease; }
+  .fade-leave { opacity: 1; transform: scale(1); }
+  .fade-leave-active { opacity: 0; transform: scale(0.95); transition: opacity 0.2s ease, transform 0.2s ease; }
 </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -27,7 +51,7 @@
   </div>
 </div>
 
-<!-- Modal global message -->
+<!-- Global message modal -->
 <div id="globalMessageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
   <div class="bg-white rounded-lg shadow-lg p-6 max-w-md text-center">
     <h2 class="text-xl font-bold mb-4">Mensagem da Moderação</h2>
@@ -51,9 +75,11 @@
       <button onclick="closeSettingsModal()" class="text-gray-500 hover:text-gray-700"><i data-feather="x" class="w-6 h-6"></i></button>
     </div>
 
+    <!-- Configurações do Membro -->
     <div id="memberSettings" class="space-y-6 block">
-      <h4 class="font-semibold mb-2">Tema do Sistema</h4>
-      <div class="flex gap-3 mb-4">
+
+      <h4 class="font-semibold mb-2">Cor do Site (Tema)</h4>
+      <div class="flex gap-3">
         <button onclick="changeThemeColorMember('#3B82F6')" class="w-10 h-10 rounded-lg bg-blue-500" title="Azul"></button>
         <button onclick="changeThemeColorMember('#10B981')" class="w-10 h-10 rounded-lg bg-green-500" title="Verde"></button>
         <button onclick="changeThemeColorMember('#F59E0B')" class="w-10 h-10 rounded-lg bg-yellow-500" title="Amarelo"></button>
@@ -61,7 +87,7 @@
         <button onclick="changeThemeColorMember('#8B5CF6')" class="w-10 h-10 rounded-lg bg-purple-500" title="Roxo"></button>
       </div>
 
-      <h4 class="font-semibold mb-2">Cor das Barras</h4>
+      <h4 class="font-semibold mb-2">Cor da Barra</h4>
       <div class="flex gap-3">
         <button onclick="changeBarColorMember('#3B82F6')" class="w-10 h-10 rounded-lg bg-blue-500" title="Azul"></button>
         <button onclick="changeBarColorMember('#10B981')" class="w-10 h-10 rounded-lg bg-green-500" title="Verde"></button>
@@ -70,15 +96,11 @@
         <button onclick="changeBarColorMember('#8B5CF6')" class="w-10 h-10 rounded-lg bg-purple-500" title="Roxo"></button>
       </div>
 
-      <h4 class="font-semibold mb-2">Cor do Fundo</h4>
-      <div class="flex gap-3">
-        <button onclick="changeBackgroundColorMember('#F3F4F6')" class="w-10 h-10 rounded-lg bg-gray-100 border" title="Claro"></button>
-        <button onclick="changeBackgroundColorMember('#1E293B')" class="w-10 h-10 rounded-lg bg-gray-800 border" title="Escuro"></button>
-        <button onclick="changeBackgroundColorMember('#84CC16')" class="w-10 h-10 rounded-lg bg-lime-500 border" title="Verde"></button>
-      </div>
-
       <h4 class="font-semibold mb-2">Imagem do Plano de Fundo (Membro)</h4>
       <input type="file" id="memberBackgroundInput" accept="image/*" />
+
+      <h4 class="font-semibold mb-2">Cor do Nome do Site</h4>
+      <input type="color" id="memberSiteTitleColor" onchange="changeSiteTitleColorMember(this.value)" />
 
       <div class="pt-4 border-t">
         <h4 class="font-semibold mb-2">Login do Administrador</h4>
@@ -88,29 +110,31 @@
       </div>
     </div>
 
+    <!-- Configurações do Administrador -->
     <div id="adminSettings" class="space-y-6 hidden">
+
       <h4 class="font-semibold text-lg">Painel Administrativo</h4>
 
-      <h4 class="font-semibold">Mensagem Global</h4>
+      <h4 class="font-semibold mb-2">Nome do Site</h4>
+      <input type="text" id="adminSiteTitle" placeholder="Nome do Site" class="w-full px-3 py-2 border rounded-lg" />
+      <button onclick="changeSiteTitleAdmin()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Alterar Nome do Site</button>
+
+      <h4 class="font-semibold mb-2">Cor do Nome do Site</h4>
+      <input type="color" id="adminSiteTitleColor" />
+      <button onclick="changeSiteTitleColorAdmin()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Alterar Cor do Nome</button>
+
+      <h4 class="font-semibold mb-2 mt-6">Cor do Tema Global</h4>
+      <input type="color" onchange="changeThemeColor(this.value)" />
+
+      <h4 class="font-semibold mb-2 mt-6">Cor da Barra Global</h4>
+      <input type="color" onchange="changeBarColor(this.value)" />
+
+      <h4 class="font-semibold mb-2 mt-6">Imagem do Plano de Fundo Global</h4>
+      <input type="file" id="adminBackgroundInput" accept="image/*" />
+
+      <h4 class="font-semibold mt-4">Mensagem Global</h4>
       <input id="globalMessageInput" type="text" placeholder="Mensagem para todos" class="w-full px-3 py-2 border rounded-lg" />
       <button onclick="sendGlobalMessage()" class="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600">Enviar</button>
-
-      <h4 class="font-semibold mt-4">Configurações de Cores Globais</h4>
-      <div class="mb-2 flex items-center gap-2">
-        <label class="w-32 font-semibold">Cor do Tema</label>
-        <input type="color" onchange="changeThemeColor(this.value)" />
-      </div>
-      <div class="mb-2 flex items-center gap-2">
-        <label class="w-32 font-semibold">Cor da Barra</label>
-        <input type="color" onchange="changeBarColor(this.value)" />
-      </div>
-      <div class="mb-2 flex items-center gap-2">
-        <label class="w-32 font-semibold">Cor do Fundo</label>
-        <input type="color" onchange="changeBackgroundColor(this.value)" />
-      </div>
-
-      <h4 class="font-semibold mb-2 mt-6">Imagem do Plano de Fundo (Global/Admin)</h4>
-      <input type="file" id="adminBackgroundInput" accept="image/*" />
 
       <h4 class="font-semibold mt-4">Gerar Credenciais</h4>
       <input id="newCredentialUser" placeholder="Usuário" class="px-3 py-2 border rounded w-full mb-2" />
@@ -123,12 +147,13 @@
       <h4 class="font-semibold mt-4">Provas Enviadas (Admin)</h4>
       <div id="proofsPanel" class="space-y-4 p-4 border rounded bg-gray-50 max-h-64 overflow-auto"></div>
     </div>
+
   </div>
 </div>
 
 <div class="container mx-auto px-4 py-8">
   <header class="flex justify-between items-center mb-8">
-    <h1 class="text-3xl font-bold text-blue-500">Progresso em Foco</h1>
+    <h1 id="siteTitle" class="text-3xl font-bold" style="color: var(--site-title-color);">Progresso em Foco</h1>
   </header>
 
   <div class="bg-white rounded-lg shadow p-6 mb-8">
@@ -141,11 +166,11 @@
   </div>
 
   <div id="leaderboard" class="space-y-2"></div>
-
   <div id="barsContainer" class="space-y-6"></div>
 </div>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getDatabase, ref, set, push, onValue, get, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
@@ -204,6 +229,28 @@ function showAdminShieldIcon(){
   feather.replace();
 }
 
+function loadLocalThemeColors(){
+  const theme = localStorage.getItem('themeColor');
+  const bar = localStorage.getItem('barColor');
+  const siteTitleColor = localStorage.getItem('siteTitleColor');
+  if(theme){
+    document.documentElement.style.setProperty('--primary-color', theme);
+  }
+  if(bar){
+    barColor = bar;
+  }
+  if(siteTitleColor){
+    document.documentElement.style.setProperty('--site-title-color', siteTitleColor);
+    document.getElementById('siteTitle').style.color = siteTitleColor;
+  }
+}
+function loadLocalBackgroundImage(){
+  const localBg = localStorage.getItem('memberBackgroundImage');
+  if(localBg){
+    document.body.style.backgroundImage = `url(${localBg})`;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const adminLogged = sessionStorage.getItem('adminLogged');
   if(adminLogged === 'true'){
@@ -213,8 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProofsPanel();
   } else {
     loadLocalThemeColors();
+    loadLocalBackgroundImage();
   }
-  loadLocalBackgroundImage();
   feather.replace();
 });
 
@@ -244,10 +291,42 @@ async function loginAdmin(){
   } else alert('Usuário ou senha incorretos.');
 }
 
+function changeThemeColorMember(hex){
+  document.documentElement.style.setProperty('--primary-color', hex);
+  localStorage.setItem('themeColor', hex);
+  showNotification('Tema alterado para você');
+}
+function changeBarColorMember(hex){
+  barColor = hex;
+  renderBars();
+  localStorage.setItem('barColor', hex);
+  showNotification('Cor da barra alterada para você');
+}
+function changeSiteTitleColorMember(hex){
+  document.documentElement.style.setProperty('--site-title-color', hex);
+  document.getElementById('memberSiteTitleColor').value = hex;
+  document.getElementById('siteTitle').style.color = hex;
+  localStorage.setItem('siteTitleColor', hex);
+  showNotification('Cor do nome do site alterada para você');
+}
+
+document.getElementById('memberBackgroundInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    localStorage.setItem('memberBackgroundImage', dataUrl);
+    document.body.style.backgroundImage = `url(${dataUrl})`;
+    showNotification('Plano de fundo alterado para você.');
+  };
+  reader.readAsDataURL(file);
+});
+
 function changeThemeColor(hex){
   if(isAdmin){
     set(ref(db, 'globalColors/themeColor'), hex);
-    showNotification('Tema alterado para todos!');
+    showNotification('Tema global alterado!');
   }
 }
 function changeBarColor(hex){
@@ -255,93 +334,78 @@ function changeBarColor(hex){
     barColor = hex;
     renderBars();
     set(ref(db, 'globalColors/barColor'), hex);
-    showNotification('Cor da barra alterada para todos!');
+    showNotification('Cor da barra global alterada!');
   }
 }
 function changeBackgroundColor(hex){
   if(isAdmin){
     set(ref(db, 'globalColors/backgroundColor'), hex);
-    showNotification('Fundo alterado para todos!');
+    showNotification('Fundo global alterado!');
   }
 }
 
-function changeThemeColorMember(hex){
-  document.documentElement.style.setProperty('--primary-color', hex);
-  saveLocalThemeColors(hex, barColor);
-  showNotification('Tema alterado para você');
-}
-function changeBarColorMember(hex){
-  barColor = hex;
-  renderBars();
-  saveLocalThemeColors(document.documentElement.style.getPropertyValue('--primary-color').trim(), barColor);
-  showNotification('Cor da barra alterada para você');
-}
-function changeBackgroundColorMember(hex){
-  document.body.style.backgroundColor = hex;
-  let theme = document.documentElement.style.getPropertyValue('--primary-color').trim();
-  saveLocalThemeColors(theme, barColor);
-  showNotification('Fundo alterado para você');
-}
-
-function saveLocalThemeColors(themeColor, barColor){
-  localStorage.setItem('themeColor', themeColor);
-  localStorage.setItem('barColor', barColor);
-}
-
-function loadLocalThemeColors(){
-  const theme = localStorage.getItem('themeColor');
-  const bar = localStorage.getItem('barColor');
-  if(theme){
-    document.documentElement.style.setProperty('--primary-color', theme);
+function changeSiteTitleAdmin(){
+  if(isAdmin){
+    const name = document.getElementById('adminSiteTitle').value.trim() || "Progresso em Foco";
+    set(ref(db,'siteTitle'), name);
+    showNotification('Nome do site alterado!');
   }
-  if(bar){
-    barColor = bar;
+}
+
+function changeSiteTitleColorAdmin(){
+  if(isAdmin){
+    const color = document.getElementById('adminSiteTitleColor').value;
+    set(ref(db, 'siteTitleColor'), color);
+    showNotification('Cor do nome do site alterada!');
+  }
+}
+
+document.getElementById('adminBackgroundInput').addEventListener('change', e => {
+  if(!isAdmin) return alert('Somente admins podem alterar fundo global!');
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    set(ref(db, 'globalBackgroundImage'), dataUrl);
+    showNotification('Plano de fundo global alterado!');
+  };
+  reader.readAsDataURL(file);
+});
+
+onValue(ref(db, 'globalColors'), snap => {
+  const colors = snap.val() || {};
+  if(colors.themeColor){
+    document.documentElement.style.setProperty('--primary-color', colors.themeColor);
+  }
+  if(colors.barColor){
+    barColor = colors.barColor;
     renderBars();
   }
-}
-
-function createCredential(){
-  const user = document.getElementById('newCredentialUser').value.trim();
-  const pass = document.getElementById('newCredentialPass').value.trim();
-  if(!user || !pass){ alert('Preencha usuário e senha'); return; }
-  push(ref(db,'credentials'), {username:user, password:pass}).then(()=>{
-    showNotification('Credencial gerada com sucesso!');
-    document.getElementById('newCredentialUser').value = '';
-    document.getElementById('newCredentialPass').value = '';
-    loadCredentials();
-  });
-}
-
-function loadCredentials(){
-  const adminList = document.getElementById('adminList');
-  adminList.innerHTML = '';
-  get(ref(db,'credentials')).then(snap=>{
-    const creds = snap.val() || {};
-    Object.entries(creds).forEach(([key,val]) => {
-      const div = document.createElement('div');
-      div.className = 'flex justify-between items-center bg-gray-100 p-2 rounded';
-
-      div.textContent = `Usuário: ${val.username} | Senha: ${val.password}`;
-
-      const btn = document.createElement('button');
-      btn.textContent = 'Excluir';
-      btn.className = 'bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 ml-4';
-      btn.onclick = () => deleteCredential(key);
-      div.appendChild(btn);
-
-      adminList.appendChild(div);
-    });
-  });
-}
-
-function deleteCredential(key){
-  if(confirm('Deseja realmente excluir esta credencial?')) {
-    remove(ref(db,'credentials/' + key)).then(()=>{
-      showNotification('Credencial excluída com sucesso!');
-      loadCredentials();
-    });
+  if(colors.backgroundColor){
+    document.body.style.backgroundColor = colors.backgroundColor;
   }
-}
+});
+
+onValue(ref(db, 'siteTitle'), snap => {
+  const name = snap.val() || 'Progresso em Foco';
+  document.getElementById('siteTitle').textContent = name;
+});
+
+onValue(ref(db, 'siteTitleColor'), snap => {
+  const color = snap.val() || '#3B82F6';
+  document.documentElement.style.setProperty('--site-title-color', color);
+  document.getElementById('siteTitle').style.color = color;
+});
+
+onValue(ref(db, 'globalBackgroundImage'), snap => {
+  const url = snap.val();
+  if(url) {
+    document.body.style.backgroundImage = `url(${url})`;
+  } else {
+    document.body.style.backgroundImage = '';
+  }
+});
 
 document.getElementById('addBarBtn').addEventListener('click', () => {
   const name = document.getElementById('newBarName').value.trim();
@@ -465,61 +529,37 @@ onValue(ref(db,'globalMessage'), snap => {
 
 onValue(ref(db, 'credentials'), loadCredentials);
 
-onValue(ref(db, 'globalColors'), snap => {
-  const colors = snap.val() || {};
-  if(colors.themeColor){
-    document.documentElement.style.setProperty('--primary-color', colors.themeColor);
-  }
-  if(colors.barColor){
-    barColor = colors.barColor;
-    renderBars();
-  }
-  if(colors.backgroundColor){
-    document.body.style.backgroundColor = colors.backgroundColor;
-  }
-});
+function loadCredentials(){
+  const adminList = document.getElementById('adminList');
+  adminList.innerHTML = '';
+  get(ref(db,'credentials')).then(snap=>{
+    const creds = snap.val() || {};
+    Object.entries(creds).forEach(([key,val]) => {
+      const div = document.createElement('div');
+      div.className = 'flex justify-between items-center bg-gray-100 p-2 rounded';
 
-document.getElementById('memberBackgroundInput').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const dataUrl = reader.result;
-    localStorage.setItem('memberBackgroundImage', dataUrl);
-    document.body.style.backgroundImage = `url(${dataUrl})`;
-    showNotification('Plano de fundo alterado para você.');
-  };
-  reader.readAsDataURL(file);
-});
+      div.textContent = `Usuário: ${val.username} | Senha: ${val.password}`;
 
-function loadLocalBackgroundImage(){
-  const localBg = localStorage.getItem('memberBackgroundImage');
-  if(localBg){
-    document.body.style.backgroundImage = `url(${localBg})`;
+      const btn = document.createElement('button');
+      btn.textContent = 'Excluir';
+      btn.className = 'bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 ml-4';
+      btn.onclick = () => deleteCredential(key);
+      div.appendChild(btn);
+
+      adminList.appendChild(div);
+    });
+  });
+}
+function deleteCredential(key){
+  if(confirm('Deseja realmente excluir esta credencial?')) {
+    remove(ref(db,'credentials/' + key)).then(()=>{
+      showNotification('Credencial excluída com sucesso!');
+      loadCredentials();
+    });
   }
 }
 
-document.getElementById('adminBackgroundInput').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const dataUrl = reader.result;
-    set(ref(db,'globalBackgroundImage'), dataUrl);
-    showNotification('Plano de fundo global alterado!');
-  };
-  reader.readAsDataURL(file);
-});
-
-onValue(ref(db,'globalBackgroundImage'), snap => {
-  const url = snap.val();
-  if(url) {
-    document.body.style.backgroundImage = `url(${url})`;
-  } else {
-    document.body.style.backgroundImage = '';
-  }
-});
-
+// Renderização e controle das provas enviadas para admin com rejeitar e progress reset
 function renderProofsPanel(){
   const adminSettings = document.getElementById('adminSettings');
   const oldProofsPanel = document.getElementById('proofsPanel');
@@ -532,6 +572,7 @@ function renderProofsPanel(){
 
   bars.forEach(bar => {
     if(!bar.proofs || bar.proofs.length === 0) return;
+
     const barDiv = document.createElement('div');
     barDiv.className = 'mb-4 border-b pb-2';
 
@@ -571,6 +612,7 @@ function rejectProof(barKey, proofIndex){
   });
 }
 
+// Exportar funções para uso no HTML
 window.openSettingsModal = openSettingsModal;
 window.closeSettingsModal = closeSettingsModal;
 window.openAdminPanel = openAdminPanel;
@@ -584,7 +626,16 @@ window.handleFileUpload = handleFileUpload;
 window.sendGlobalMessage = sendGlobalMessage;
 window.renderBars = renderBars;
 window.renderProofsPanel = renderProofsPanel;
-window.rejectProof = rejectProof;  
+window.rejectProof = rejectProof;
+window.changeThemeColorMember = changeThemeColorMember;
+window.changeBarColorMember = changeBarColorMember;
+window.changeSiteTitleColorMember = changeSiteTitleColorMember;
+window.changeThemeColor = changeThemeColor;
+window.changeBarColor = changeBarColor;
+window.changeBackgroundColor = changeBackgroundColor;
+window.changeSiteTitleAdmin = changeSiteTitleAdmin;
+window.changeSiteTitleColorAdmin = changeSiteTitleColorAdmin;
+
 </script>
 
 </body>
