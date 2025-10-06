@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Progresso em Foco</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+<style>
+:root { --primary-color: #3B82F6; }
+.progress-bar { transition: width 0.5s ease-in-out; }
+.notification { animation: slideIn 0.5s forwards, fadeOut 0.5s 2.5s forwards; }
+@keyframes slideIn { from { transform: translateY(-100px); opacity:0;} to { transform: translateY(0); opacity:1; } }
+@keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+.fade-enter { opacity: 0; transform: scale(0.95); }
+.fade-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.3s ease, transform 0.3s ease; }
+.fade-leave { opacity: 1; transform: scale(1); }
+.fade-leave-active { opacity:0; transform: scale(0.95); transition: opacity 0.2s ease, transform 0.2s ease; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<div id="notification" class="notification fixed top-4 left-1/2 transform -translate-x-1/2 z-50 hidden">
+  <div class="bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
+    <i data-feather="alert-circle" class="mr-2"></i>
+    <span id="notification-message"></span>
+  </div>
+</div>
+
+<!-- Modal global message -->
+<div id="globalMessageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 max-w-md text-center">
+    <h2 class="text-xl font-bold mb-4">Mensagem da Moderação</h2>
+    <p id="globalMessageText" class="mb-6"></p>
+    <button id="closeGlobalMessageBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Fechar</button>
+  </div>
+</div>
+
+<button onclick="openSettingsModal()" class="fixed top-4 right-4 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition" title="Configurações">
+  <i data-feather="settings" class="w-6 h-6"></i>
+</button>
+
+<button id="adminShieldBtn" onclick="openAdminPanel()" class="fixed top-4 right-16 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition hidden" title="Painel Administrativo">
+  <i data-feather="shield" class="w-6 h-6"></i>
+</button>
+
+<div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div id="settingsContent" class="bg-white rounded-xl shadow-xl p-8 w-full max-w-md overflow-auto max-h-[90vh] fade-enter">
+    <div class="flex justify-between items-center mb-6 border-b pb-4">
+      <h3 class="text-2xl font-bold text-gray-800">Configurações</h3>
+      <button onclick="closeSettingsModal()" class="text-gray-500 hover:text-gray-700"><i data-feather="x" class="w-6 h-6"></i></button>
+    </div>
+
+    <div id="memberSettings" class="space-y-6 block">
+      <h4 class="font-semibold mb-2">Tema do Sistema</h4>
+      <div class="flex gap-3 mb-4">
+        <button onclick="changeThemeColorMember('#3B82F6')" class="w-10 h-10 rounded-lg bg-blue-500" title="Azul"></button>
+        <button onclick="changeThemeColorMember('#10B981')" class="w-10 h-10 rounded-lg bg-green-500" title="Verde"></button>
+        <button onclick="changeThemeColorMember('#F59E0B')" class="w-10 h-10 rounded-lg bg-yellow-500" title="Amarelo"></button>
+        <button onclick="changeThemeColorMember('#EF4444')" class="w-10 h-10 rounded-lg bg-red-500" title="Vermelho"></button>
+        <button onclick="changeThemeColorMember('#8B5CF6')" class="w-10 h-10 rounded-lg bg-purple-500" title="Roxo"></button>
+      </div>
+
+      <h4 class="font-semibold mb-2">Cor das Barras</h4>
+      <div class="flex gap-3">
+        <button onclick="changeBarColorMember('#3B82F6')" class="w-10 h-10 rounded-lg bg-blue-500" title="Azul"></button>
+        <button onclick="changeBarColorMember('#10B981')" class="w-10 h-10 rounded-lg bg-green-500" title="Verde"></button>
+        <button onclick="changeBarColorMember('#F59E0B')" class="w-10 h-10 rounded-lg bg-yellow-500" title="Amarelo"></button>
+        <button onclick="changeBarColorMember('#EF4444')" class="w-10 h-10 rounded-lg bg-red-500" title="Vermelho"></button>
+        <button onclick="changeBarColorMember('#8B5CF6')" class="w-10 h-10 rounded-lg bg-purple-500" title="Roxo"></button>
+      </div>
+
+      <h4 class="font-semibold mb-2">Cor do Fundo</h4>
+      <div class="flex gap-3">
+        <button onclick="changeBackgroundColorMember('#F3F4F6')" class="w-10 h-10 rounded-lg bg-gray-100 border" title="Claro"></button>
+        <button onclick="changeBackgroundColorMember('#1E293B')" class="w-10 h-10 rounded-lg bg-gray-800 border" title="Escuro"></button>
+        <button onclick="changeBackgroundColorMember('#84CC16')" class="w-10 h-10 rounded-lg bg-lime-500 border" title="Verde"></button>
+      </div>
+
+      <h4 class="font-semibold mb-2">Imagem do Plano de Fundo (Membro)</h4>
+      <input type="file" id="memberBackgroundInput" accept="image/*" />
+
+      <div class="pt-4 border-t">
+        <h4 class="font-semibold mb-2">Login do Administrador</h4>
+        <input id="adminUsername" type="text" placeholder="Usuário" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-2" />
+        <input id="adminPassword" type="password" placeholder="Senha" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-2" />
+        <button onclick="loginAdmin()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Entrar como Admin</button>
+      </div>
+    </div>
+
+    <div id="adminSettings" class="space-y-6 hidden">
+      <h4 class="font-semibold text-lg">Painel Administrativo</h4>
+
+      <h4 class="font-semibold">Mensagem Global</h4>
+      <input id="globalMessageInput" type="text" placeholder="Mensagem para todos" class="w-full px-3 py-2 border rounded-lg" />
+      <button onclick="sendGlobalMessage()" class="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600">Enviar</button>
+
+      <h4 class="font-semibold mt-4">Configurações de Cores Globais</h4>
+      <div class="mb-2 flex items-center gap-2">
+        <label class="w-32 font-semibold">Cor do Tema</label>
+        <input type="color" onchange="changeThemeColor(this.value)" />
+      </div>
+      <div class="mb-2 flex items-center gap-2">
+        <label class="w-32 font-semibold">Cor da Barra</label>
+        <input type="color" onchange="changeBarColor(this.value)" />
+      </div>
+      <div class="mb-2 flex items-center gap-2">
+        <label class="w-32 font-semibold">Cor do Fundo</label>
+        <input type="color" onchange="changeBackgroundColor(this.value)" />
+      </div>
+
+      <h4 class="font-semibold mb-2 mt-6">Imagem do Plano de Fundo (Global/Admin)</h4>
+      <input type="file" id="adminBackgroundInput" accept="image/*" />
+
+      <h4 class="font-semibold mt-4">Gerar Credenciais</h4>
+      <input id="newCredentialUser" placeholder="Usuário" class="px-3 py-2 border rounded w-full mb-2" />
+      <input id="newCredentialPass" placeholder="Senha" class="px-3 py-2 border rounded w-full mb-2" />
+      <button onclick="createCredential()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Gerar Credencial</button>
+
+      <h4 class="font-semibold mt-4">Credenciais Geradas</h4>
+      <div id="adminList" class="space-y-2 bg-gray-100 p-2 rounded max-h-40 overflow-auto"></div>
+
+      <h4 class="font-semibold mt-4">Provas Enviadas (Admin)</h4>
+      <div id="proofsPanel" class="space-y-4 p-4 border rounded bg-gray-50 max-h-64 overflow-auto"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container mx-auto px-4 py-8">
+  <header class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-blue-500">Progresso em Foco</h1>
+  </header>
+
+  <div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h2 class="text-xl font-semibold mb-4">Adicionar Nova Meta</h2>
+    <div class="flex gap-4">
+      <input id="newBarName" type="text" placeholder="Nome da Meta" class="border rounded p-2 flex-1" />
+      <input id="newBarGoal" type="number" placeholder="Meta (%)" class="border rounded p-2 w-24" />
+      <button id="addBarBtn" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">Adicionar</button>
+    </div>
+  </div>
+
+  <div id="leaderboard" class="space-y-2"></div>
+
+  <div id="barsContainer" class="space-y-6"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, get, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDun-EEYvE7pUYtJCS7APB6J4xSD-gN0oE",
+  authDomain: "famous-city-rp.firebaseapp.com",
+  databaseURL: "https://famous-city-rp-default-rtdb.firebaseio.com",
+  projectId: "famous-city-rp",
+  storageBucket: "famous-city-rp.firebasestorage.app",
+  messagingSenderId: "938453127813",
+  appId: "1:938453127813:web:11c4e6500b3828a8bacfec",
+  measurementId: "G-BXHKSPBFTN"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let bars = [];
+let barColor = '#3B82F6';
+let isAdmin = false;
+let currentUser = null;
+
+function showNotification(msg){
+  const el = document.getElementById('notification');
+  document.getElementById('notification-message').textContent = msg;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 2500);
+}
+
+function openSettingsModal() {
+  const modal = document.getElementById('settingsModal');
+  const content = document.getElementById('settingsContent');
+  modal.classList.remove('hidden');
+  content.classList.remove('fade-leave-active');
+  content.classList.add('fade-enter-active');
+}
+function closeSettingsModal() {
+  const modal = document.getElementById('settingsModal');
+  const content = document.getElementById('settingsContent');
+  content.classList.remove('fade-enter-active');
+  content.classList.add('fade-leave-active');
+  setTimeout(() => modal.classList.add('hidden'), 200);
+}
+
+function openAdminPanel(){
+  openSettingsModal();
+  document.getElementById('memberSettings').classList.remove('block');
+  document.getElementById('memberSettings').style.display = 'none';
+  document.getElementById('adminSettings').classList.add('block');
+  document.getElementById('adminSettings').style.display = 'block';
+}
+
+function showAdminShieldIcon(){
+  const shield = document.getElementById('adminShieldBtn');
+  shield.classList.remove('hidden');
+  feather.replace();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const adminLogged = sessionStorage.getItem('adminLogged');
+  if(adminLogged === 'true'){
+    isAdmin = true;
+    showAdminShieldIcon();
+    loadCredentials();
+    renderProofsPanel();
+  } else {
+    loadLocalThemeColors();
+  }
+  loadLocalBackgroundImage();
+  feather.replace();
+});
+
+async function loginAdmin(){
+  const user = document.getElementById('adminUsername').value.trim();
+  const pass = document.getElementById('adminPassword').value.trim();
+  if(!user || !pass){ alert('Preencha usuário e senha'); return; }
+
+  const [adminsSnap, credsSnap] = await Promise.all([
+    get(ref(db,'admins')),
+    get(ref(db,'credentials'))
+  ]);
+  const admins = adminsSnap.val() || {};
+  const creds = credsSnap.val() || {};
+
+  const validAdmin = Object.values(admins).some(a => a.username === user && a.password === pass);
+  const validCred = Object.values(creds).some(c => c.username === user && c.password === pass);
+
+  if(validAdmin || validCred){
+    isAdmin = true;
+    currentUser = user;
+    sessionStorage.setItem('adminLogged', 'true');
+    showNotification('Login de administrador realizado!');
+    showAdminShieldIcon();
+    loadCredentials();
+    renderProofsPanel();
+  } else alert('Usuário ou senha incorretos.');
+}
+
+function changeThemeColor(hex){
+  if(isAdmin){
+    set(ref(db, 'globalColors/themeColor'), hex);
+    showNotification('Tema alterado para todos!');
+  }
+}
+function changeBarColor(hex){
+  if(isAdmin){
+    barColor = hex;
+    renderBars();
+    set(ref(db, 'globalColors/barColor'), hex);
+    showNotification('Cor da barra alterada para todos!');
+  }
+}
+function changeBackgroundColor(hex){
+  if(isAdmin){
+    set(ref(db, 'globalColors/backgroundColor'), hex);
+    showNotification('Fundo alterado para todos!');
+  }
+}
+
+function changeThemeColorMember(hex){
+  document.documentElement.style.setProperty('--primary-color', hex);
+  saveLocalThemeColors(hex, barColor);
+  showNotification('Tema alterado para você');
+}
+function changeBarColorMember(hex){
+  barColor = hex;
+  renderBars();
+  saveLocalThemeColors(document.documentElement.style.getPropertyValue('--primary-color').trim(), barColor);
+  showNotification('Cor da barra alterada para você');
+}
+function changeBackgroundColorMember(hex){
+  document.body.style.backgroundColor = hex;
+  let theme = document.documentElement.style.getPropertyValue('--primary-color').trim();
+  saveLocalThemeColors(theme, barColor);
+  showNotification('Fundo alterado para você');
+}
+
+function saveLocalThemeColors(themeColor, barColor){
+  localStorage.setItem('themeColor', themeColor);
+  localStorage.setItem('barColor', barColor);
+}
+
+function loadLocalThemeColors(){
+  const theme = localStorage.getItem('themeColor');
+  const bar = localStorage.getItem('barColor');
+  if(theme){
+    document.documentElement.style.setProperty('--primary-color', theme);
+  }
+  if(bar){
+    barColor = bar;
+    renderBars();
+  }
+}
+
+function createCredential(){
+  const user = document.getElementById('newCredentialUser').value.trim();
+  const pass = document.getElementById('newCredentialPass').value.trim();
+  if(!user || !pass){ alert('Preencha usuário e senha'); return; }
+  push(ref(db,'credentials'), {username:user, password:pass}).then(()=>{
+    showNotification('Credencial gerada com sucesso!');
+    document.getElementById('newCredentialUser').value = '';
+    document.getElementById('newCredentialPass').value = '';
+    loadCredentials();
+  });
+}
+
+function loadCredentials(){
+  const adminList = document.getElementById('adminList');
+  adminList.innerHTML = '';
+  get(ref(db,'credentials')).then(snap=>{
+    const creds = snap.val() || {};
+    Object.entries(creds).forEach(([key,val]) => {
+      const div = document.createElement('div');
+      div.className = 'flex justify-between items-center bg-gray-100 p-2 rounded';
+
+      div.textContent = `Usuário: ${val.username} | Senha: ${val.password}`;
+
+      const btn = document.createElement('button');
+      btn.textContent = 'Excluir';
+      btn.className = 'bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 ml-4';
+      btn.onclick = () => deleteCredential(key);
+      div.appendChild(btn);
+
+      adminList.appendChild(div);
+    });
+  });
+}
+
+function deleteCredential(key){
+  if(confirm('Deseja realmente excluir esta credencial?')) {
+    remove(ref(db,'credentials/' + key)).then(()=>{
+      showNotification('Credencial excluída com sucesso!');
+      loadCredentials();
+    });
+  }
+}
+
+document.getElementById('addBarBtn').addEventListener('click', () => {
+  const name = document.getElementById('newBarName').value.trim();
+  const goalStr = document.getElementById('newBarGoal').value.trim();
+  if(!name){ alert('Digite o nome da meta'); return; }
+  if(!goalStr || isNaN(goalStr)) {
+    alert('Digite um valor válido para a meta (%)');
+    return;
+  }
+  const goal = parseFloat(goalStr);
+  currentUser = prompt('Digite seu nome', 'Membro') || 'Membro';
+  push(ref(db,'bars'), {
+    name,
+    member: currentUser,
+    progress: 0,
+    goal,
+    proofs: []
+  });
+  document.getElementById('newBarName').value = '';
+  document.getElementById('newBarGoal').value = '';
+  showNotification('Meta adicionada!');
+});
+
+function renderBars(){
+  const container = document.getElementById('barsContainer');
+  container.innerHTML = '';
+  const leaderboard = document.getElementById('leaderboard');
+  leaderboard.innerHTML = '';
+
+  bars.forEach(b => {
+    const canEdit = isAdmin || b.member === currentUser;
+    const relativeProgress = (b.progress / (b.goal || 100)) * 100;
+
+    const lbItem = document.createElement('div');
+    lbItem.textContent = `${b.member}: ${b.progress}%`;
+    lbItem.className = 'bg-gray-100 p-2 rounded';
+    leaderboard.appendChild(lbItem);
+
+    const barEl = document.createElement('div');
+    barEl.className = 'bg-white rounded-lg shadow p-6 mb-4';
+    barEl.innerHTML = `
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">${b.name} | ${b.member} | Meta: ${b.goal || 100}%</h3>
+        <button ${canEdit ? '' : 'disabled style="display:none;"'} onclick="deleteBar('${b.key}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Excluir</button>
+      </div>
+      <div class="flex items-center space-x-4 mb-2">
+        <div class="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden">
+          <div class="progress-bar h-full rounded-full" style="width:${relativeProgress}%; background-color:${barColor}"></div>
+        </div>
+        <span>${b.progress}% / ${b.goal || 100}%</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="file" id="progressPhoto-${b.key}" accept="image/*" class="${canEdit ? 'block' : 'hidden'} hidden" />
+        <label for="progressPhoto-${b.key}" class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2 ${canEdit ? '' : 'hidden'}">
+          <i data-feather="camera"></i> Enviar Prova
+        </label>
+      </div>
+    `;
+    barEl.querySelector(`#progressPhoto-${b.key}`).addEventListener('change', e => handleFileUpload(b.key, e.target.files[0]));
+    container.appendChild(barEl);
+  });
+  feather.replace();
+}
+
+function deleteBar(key){
+  if(confirm('Deseja realmente excluir esta barra?')){
+    remove(ref(db,'bars/'+key));
+    showNotification('Barra excluída!');
+  }
+}
+
+function handleFileUpload(barKey, file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e =>{
+    push(ref(db,'bars/'+barKey+'/proofs'), {date:new Date().toISOString(), image:e.target.result}).then(() => {
+      get(ref(db,'bars/'+barKey+'/progress')).then(snap => {
+        let currentProgress = snap.val() || 0;
+        const newProgress = Math.min(currentProgress + 10, 100);
+        set(ref(db,'bars/'+barKey+'/progress'), newProgress);
+        showNotification('Prova enviada e progresso atualizado');
+      });
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function sendGlobalMessage(){
+  const msg = document.getElementById('globalMessageInput').value.trim();
+  if(!msg){ alert('Digite uma mensagem'); return; }
+  set(ref(db,'globalMessage'), msg);
+  showNotification('Mensagem global enviada!');
+  document.getElementById('globalMessageInput').value='';
+  sessionStorage.removeItem('globalMessageClosed');
+}
+
+onValue(ref(db,'bars'), snap => {
+  bars = Object.entries(snap.val() || {}).map(([key,val]) => ({key,...val}));
+  renderBars();
+  if(isAdmin) renderProofsPanel();
+});
+
+onValue(ref(db,'globalMessage'), snap => {
+  const msg = snap.val();
+  if (msg) {
+    const closedMsg = sessionStorage.getItem('globalMessageClosed');
+    if(closedMsg !== msg){
+      const modal = document.getElementById('globalMessageModal');
+      document.getElementById('globalMessageText').textContent = msg;
+      modal.classList.remove('hidden');
+
+      document.getElementById('closeGlobalMessageBtn').onclick = () => {
+        modal.classList.add('hidden');
+        sessionStorage.setItem('globalMessageClosed', msg);
+      };
+    }
+  } else {
+    document.getElementById('globalMessageModal').classList.add('hidden');
+  }
+});
+
+onValue(ref(db, 'credentials'), loadCredentials);
+
+onValue(ref(db, 'globalColors'), snap => {
+  const colors = snap.val() || {};
+  if(colors.themeColor){
+    document.documentElement.style.setProperty('--primary-color', colors.themeColor);
+  }
+  if(colors.barColor){
+    barColor = colors.barColor;
+    renderBars();
+  }
+  if(colors.backgroundColor){
+    document.body.style.backgroundColor = colors.backgroundColor;
+  }
+});
+
+document.getElementById('memberBackgroundInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    localStorage.setItem('memberBackgroundImage', dataUrl);
+    document.body.style.backgroundImage = `url(${dataUrl})`;
+    showNotification('Plano de fundo alterado para você.');
+  };
+  reader.readAsDataURL(file);
+});
+
+function loadLocalBackgroundImage(){
+  const localBg = localStorage.getItem('memberBackgroundImage');
+  if(localBg){
+    document.body.style.backgroundImage = `url(${localBg})`;
+  }
+}
+
+document.getElementById('adminBackgroundInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    set(ref(db,'globalBackgroundImage'), dataUrl);
+    showNotification('Plano de fundo global alterado!');
+  };
+  reader.readAsDataURL(file);
+});
+
+onValue(ref(db,'globalBackgroundImage'), snap => {
+  const url = snap.val();
+  if(url) {
+    document.body.style.backgroundImage = `url(${url})`;
+  } else {
+    document.body.style.backgroundImage = '';
+  }
+});
+
+function renderProofsPanel(){
+  const adminSettings = document.getElementById('adminSettings');
+  const oldProofsPanel = document.getElementById('proofsPanel');
+  if(oldProofsPanel) oldProofsPanel.remove();
+
+  const proofsPanel = document.createElement('div');
+  proofsPanel.id = 'proofsPanel';
+  proofsPanel.className = 'space-y-4 mt-4 p-4 border rounded bg-gray-50 max-h-64 overflow-auto';
+  proofsPanel.innerHTML = '<h4 class="font-semibold mb-2">Provas Enviadas (Admin)</h4>';
+
+  bars.forEach(bar => {
+    if(!bar.proofs || bar.proofs.length === 0) return;
+    const barDiv = document.createElement('div');
+    barDiv.className = 'mb-4 border-b pb-2';
+
+    let proofsHtml = `<p><strong>${bar.name} | ${bar.member}</strong></p>`;
+    bar.proofs.forEach((proof, idx) => {
+      proofsHtml += `
+        <div class="flex items-center gap-2 mb-2">
+          <img src="${proof.image}" alt="Prova ${idx+1}" class="w-24 h-16 object-cover rounded border" />
+          <div class="flex flex-col">
+            <span class="text-sm text-gray-600">${new Date(proof.date).toLocaleString()}</span>
+            <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs mt-1"
+              onclick="rejectProof('${bar.key}', ${idx})">Rejeitar</button>
+          </div>
+        </div>
+      `;
+    });
+    barDiv.innerHTML = proofsHtml;
+    proofsPanel.appendChild(barDiv);
+  });
+
+  adminSettings.appendChild(proofsPanel);
+}
+
+function rejectProof(barKey, proofIndex){
+  if(!confirm('Deseja rejeitar esta prova? O membro terá que enviar outra prova válida.')) return;
+
+  get(ref(db, `bars/${barKey}/proofs`)).then(snap => {
+    let proofs = snap.val() || [];
+    if(proofs.length > proofIndex){
+      proofs.splice(proofIndex, 1);
+      set(ref(db, `bars/${barKey}/proofs`), proofs).then(() => {
+        set(ref(db, `bars/${barKey}/progress`), 0);
+        showNotification('Prova rejeitada. Progresso zerado para reenvio.');
+        renderProofsPanel();
+      });
+    }
+  });
+}
+
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.openAdminPanel = openAdminPanel;
+window.showAdminShieldIcon = showAdminShieldIcon;
+window.loginAdmin = loginAdmin;
+window.createCredential = createCredential;
+window.loadCredentials = loadCredentials;
+window.deleteCredential = deleteCredential;
+window.deleteBar = deleteBar;
+window.handleFileUpload = handleFileUpload;
+window.sendGlobalMessage = sendGlobalMessage;
+window.renderBars = renderBars;
+window.renderProofsPanel = renderProofsPanel;
+window.rejectProof = rejectProof;  
+</script>
+
+</body>
+</html>
