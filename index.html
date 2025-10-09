@@ -166,7 +166,6 @@
 </div>
 
 <script type="module">
-// Firebase and app initialization:
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getDatabase, ref, set, push, onValue, get, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
@@ -184,13 +183,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Variables:
 let bars = [];
 let barColor = '#3B82F6';
 let isAdmin = false;
 let currentUser = null;
 
-// Notification helper
 function showNotification(msg) {
   const el = document.getElementById('notification');
   document.getElementById('notification-message').textContent = msg;
@@ -198,7 +195,6 @@ function showNotification(msg) {
   setTimeout(() => el.classList.add('hidden'), 2500);
 }
 
-// Settings modal functions
 function openSettingsModal() {
   const modal = document.getElementById('settingsModal');
   const content = document.getElementById('settingsContent');
@@ -206,7 +202,7 @@ function openSettingsModal() {
   content.classList.remove('fade-leave-active');
   content.classList.add('fade-enter-active');
 
-  // Open members tab by default
+  // Sempre abrir aba membro
   document.getElementById('memberSettings').classList.remove('hidden');
   document.getElementById('memberSettings').style.display = 'block';
   document.getElementById('adminSettings').classList.add('hidden');
@@ -221,7 +217,6 @@ function closeSettingsModal() {
   setTimeout(() => modal.classList.add('hidden'), 200);
 }
 
-// Open admin panel from shield icon
 function openAdminPanel() {
   openSettingsModal();
 
@@ -231,34 +226,10 @@ function openAdminPanel() {
   document.getElementById('adminSettings').style.display = 'block';
 }
 
-// Show admin shield icon
 function showAdminShieldIcon() {
   const shield = document.getElementById('adminShieldBtn');
   shield.classList.remove('hidden');
   feather.replace();
-}
-
-// Load local storage settings for members
-function loadLocalThemeColors() {
-  const theme = localStorage.getItem('themeColor');
-  const bar = localStorage.getItem('barColor');
-  const siteTitleColor = localStorage.getItem('siteTitleColor');
-  if (theme) {
-    document.documentElement.style.setProperty('--primary-color', theme);
-  }
-  if (bar) {
-    barColor = bar;
-  }
-  if (siteTitleColor) {
-    document.documentElement.style.setProperty('--site-title-color', siteTitleColor);
-    document.getElementById('siteTitle').style.color = siteTitleColor;
-  }
-}
-function loadLocalBackgroundImage() {
-  const localBg = localStorage.getItem('memberBackgroundImage');
-  if (localBg) {
-    document.body.style.backgroundImage = `url(${localBg})`;
-  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -275,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
   feather.replace();
 });
 
-// Login admin function
 async function loginAdmin() {
   const user = document.getElementById('adminUsername').value.trim();
   const pass = document.getElementById('adminPassword').value.trim();
@@ -302,12 +272,9 @@ async function loginAdmin() {
     showAdminShieldIcon();
     loadCredentials();
     renderProofsPanel();
-  } else {
-    alert('Usuário ou senha incorretos.');
-  }
+  } else alert('Usuário ou senha incorretos.');
 }
 
-// Member customization functions
 function changeThemeColorMember(hex) {
   document.documentElement.style.setProperty('--primary-color', hex);
   localStorage.setItem('themeColor', hex);
@@ -326,6 +293,7 @@ function changeSiteTitleColorMember(hex) {
   localStorage.setItem('siteTitleColor', hex);
   showNotification('Cor do nome do site alterada para você');
 }
+
 document.getElementById('memberBackgroundInput').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -339,7 +307,6 @@ document.getElementById('memberBackgroundInput').addEventListener('change', e =>
   reader.readAsDataURL(file);
 });
 
-// Admin global customization functions
 function changeThemeColor(hex) {
   if (isAdmin) {
     set(ref(db, 'globalColors/themeColor'), hex);
@@ -390,7 +357,6 @@ document.getElementById('adminBackgroundInput').addEventListener('change', e => 
   reader.readAsDataURL(file);
 });
 
-// Firebase listeners to keep UI updated
 onValue(ref(db, 'globalColors'), snap => {
   const colors = snap.val() || {};
   if (colors.themeColor) {
@@ -449,7 +415,6 @@ document.getElementById('addBarBtn').addEventListener('click', () => {
   });
 });
 
-// Rendering bars and leaderboard
 function renderBars() {
   const container = document.getElementById('barsContainer');
   container.innerHTML = '';
@@ -460,17 +425,14 @@ function renderBars() {
     const canEdit = isAdmin || b.member === currentUser;
     const relativeProgress = ((b.progress || 0) / (b.goal || 100)) * 100;
 
-    // Leaderboard entry
     const lbItem = document.createElement('div');
     lbItem.textContent = `${b.member}: ${b.progress || 0}%`;
     lbItem.className = 'bg-gray-100 p-2 rounded';
     leaderboard.appendChild(lbItem);
 
-    // Bar card
     const barEl = document.createElement('div');
     barEl.className = 'bg-white rounded-lg shadow p-6 mb-4';
 
-    // Header
     const header = document.createElement('div');
     header.className = 'flex justify-between items-center mb-4';
 
@@ -480,17 +442,41 @@ function renderBars() {
 
     header.appendChild(title);
 
-    if (canEdit) {
-      const delBtn = document.createElement('button');
-      delBtn.className = 'bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600';
-      delBtn.textContent = 'Excluir';
-      delBtn.addEventListener('click', () => deleteBar(b.key));
-      header.appendChild(delBtn);
+if (canEdit) {
+  // Botão Excluir
+  const delBtn = document.createElement('button');
+  delBtn.className = 'bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600';
+  delBtn.textContent = 'Excluir';
+  delBtn.addEventListener('click', () => deleteBar(b.key));
+  header.appendChild(delBtn);
+
+  // Botão Editar
+  const editBtn = document.createElement('button');
+  editBtn.className = 'bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 ml-2';
+  editBtn.textContent = 'Editar';
+  editBtn.addEventListener('click', () => {
+    const newName = prompt('Digite o novo nome da barra:', b.name);
+    if (newName === null) return;
+
+    let newGoalStr = prompt('Digite a nova meta (%)', b.goal);
+    if (newGoalStr === null) return;
+    const newGoal = parseFloat(newGoalStr);
+    if (isNaN(newGoal) || newGoal < 0 || newGoal > 100) {
+      alert('Meta inválida! Deve ser um número entre 0 e 100.');
+      return;
     }
+
+    set(ref(db, 'bars/' + b.key), {
+      ...b,
+      name: newName,
+      goal: newGoal
+    }).then(() => showNotification('Barra atualizada!'));
+  });
+  header.appendChild(editBtn);
+}
 
     barEl.appendChild(header);
 
-    // Progress row
     const progressRow = document.createElement('div');
     progressRow.className = 'flex items-center space-x-4 mb-2';
 
@@ -511,7 +497,6 @@ function renderBars() {
 
     barEl.appendChild(progressRow);
 
-    // Upload row
     const uploadRow = document.createElement('div');
     uploadRow.className = 'flex items-center gap-2';
 
@@ -717,7 +702,30 @@ function rejectProof(barKey, proofKey) {
   });
 }
 
-// Export functions globally for inline event handlers
+async function createCredential() {
+  const user = document.getElementById('newCredentialUser').value.trim();
+  const pass = document.getElementById('newCredentialPass').value.trim();
+
+  if (!user || !pass) {
+    alert('Preencha usuário e senha para a credencial.');
+    return;
+  }
+
+  try {
+    await push(ref(db, 'credentials'), {
+      username: user,
+      password: pass
+    });
+    showNotification('Credencial gerada com sucesso!');
+    document.getElementById('newCredentialUser').value = '';
+    document.getElementById('newCredentialPass').value = '';
+    loadCredentials();
+  } catch (error) {
+    alert('Erro ao gerar credencial: ' + error.message);
+  }
+}
+
+// Expoe funções para os botões onclick
 window.openSettingsModal = openSettingsModal;
 window.closeSettingsModal = closeSettingsModal;
 window.openAdminPanel = openAdminPanel;
@@ -731,14 +739,13 @@ window.changeBarColor = changeBarColor;
 window.changeBackgroundColor = changeBackgroundColor;
 window.changeSiteTitleAdmin = changeSiteTitleAdmin;
 window.changeSiteTitleColorAdmin = changeSiteTitleColorAdmin;
-window.addBar = () => document.getElementById('addBarBtn').click();
+window.createCredential = createCredential;
+window.loadCredentials = loadCredentials;
+window.deleteCredential = deleteCredential;
 window.renderBars = renderBars;
 window.deleteBar = deleteBar;
 window.handleFileUpload = handleFileUpload;
 window.sendGlobalMessage = sendGlobalMessage;
-window.createCredential = () => alert('Função Criar Credencial não implementada');  // Implement as needed
-window.loadCredentials = loadCredentials;
-window.deleteCredential = deleteCredential;
 window.renderProofsPanel = renderProofsPanel;
 window.rejectProof = rejectProof;
 
