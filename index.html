@@ -461,9 +461,9 @@ if (canEdit) {
     let newGoalStr = prompt('Digite a nova meta (%)', b.goal);
     if (newGoalStr === null) return;
     const newGoal = parseFloat(newGoalStr);
-    if (isNaN(newGoal) || newGoal < 0 || newGoal > 100) {
-      alert('Meta inválida! Deve ser um número entre 0 e 100.');
-      return;
+    if (isNaN(newGoal) || newGoal < 0) {
+  alert('Meta inválida! Deve ser um número maior ou igual a 0.');
+  return;
     }
 
     set(ref(db, 'bars/' + b.key), {
